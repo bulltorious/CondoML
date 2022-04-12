@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+   <head>
+      <meta charset="utf-8" />
+      <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+      <meta name="description" content="" />
+      <meta name="author" content="" />
+      <title>Downtown Raleigh Condo Price Estimations</title>
+      <!-- Favicon-->
+      <link rel="icon" type="image/x-icon" href="assets/favicon.ico" />
+      <!-- Bootstrap icons-->
+      <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.5.0/font/bootstrap-icons.css" rel="stylesheet" />
+      <!-- Core theme CSS (includes Bootstrap)-->
+      <link href="{{ url_for('static', filename='css/styles.css')}}" rel="stylesheet" />
+      <link rel="stylesheet" href="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/styles/default.min.css">
+      <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/regression@2.0.1/dist/regression.min.js"></script>
+      <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+      <script src="//cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.5.1/build/highlight.min.js"></script>
+   </head>
+   <body>
+      <!-- Navigation-->
+      <nav class="navbar navbar-expand-lg navbar-light bg-light">
+         <div class="container px-4 px-lg-5">
+            <a class="navbar-brand" href="https://www.ellismis.com">Author Blog</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+            <div class="collapse navbar-collapse" id="navbarSupportedContent">
+               <ul class="navbar-nav me-auto mb-2 mb-lg-0 ms-lg-4">
+                  <li class="nav-item"><a class="nav-link active" aria-current="page" href="/">Home</a></li>
+                   <li class="nav-item"><a class="nav-link active" aria-current="page" href="https://www.linkedin.com/in/mike-a-ellis/">LinkedIn</a></li>
+                  <li class="nav-item"><a class="nav-link" href="#!">GitHub source</a></li>
+               </ul>
+            </div>
+         </div>
+      </nav>
+      <!-- Product section-->
+      <section class="py-5">
+         <div class="container px-4 px-lg-5 my-5">
+            <div class="row gx-4 gx-lg-5 align-items-center-top">
+               <div class="col-md-6 float-left-top">
+                  <canvas id="myChart" width="1" height="1"></canvas>
+                  <div>
+                     <div class="fs-5 mb-2 mt-2 fw-bolder">Accuracy Scores:</div>
+                     <p class="lead">Simple linear regression: 90.64% (with an R2 score of <span id="r2_score"></span>).</p>
+                     <p class="lead">Multivariate linear regression: <span id="mvl_score"></span>%</p>
+                     <p>Not a great improvement, but one nonetheless.  The challenge with multivariate linear regression is it treats all features equally.  So the square feet, number of bathrooms, and condo complex (and condo complexes it IS NOT) are all weight equally. </p>
+                  </div>
+               </div>
+               <div class="col-md-6">
+                  <h1 class="display-5 fw-bolder">Linear Regression</h1>
+                  <div class="fs-5 mb-5">
+                     <span>Data points are actual sales prices</span>
+                  </div>
+                  <p class="lead">Every few months I get a <a href="https://raleighdowntowncondo.com/market-report/" target="_blank">flyer</a> with the sale prices for condos in my area. With the current real estate crunch, I wondered how much I could sell my condo for. I figured this was a great opportunity to apply some machine learning. To the left is a linear regression of square feet to price using Chart.js and JavaScript. While accurate, a difference of thousands of dollars is substantial to both buyer and seller.  I believed I could do better using a multivariate linear regression that uses all the data features available in the flyer.</p>
+                  <p>The flyer also contains the number of bathrooms and the particular condo complex. The sold date is also included but is not helpful. List date would have been more useful as we could consider seasons.</p>
+                  <p>My new approach uses pandas and Scikit-learn for the machine learning.  The results are exposed via Flask backend web services and consumed via JavaScript on the front end.</p>
+                  <p>
+                  <pre><code class="language-python"># categorize the condo complexes from strings
+df_multivariate = pd.get_dummies(self.dataframe, columns=['Complex'], prefix='', prefix_sep='')
+
+# list of columns to scale
+cols_to_scale = ['Beds', 'Bath', 'SqFt']
+
+# scale all the independent features
+scaler = StandardScaler()
+scaler.fit(df_multivariate[cols_to_scale])
+df_multivariate[cols_to_scale] = scaler.transform(df_multivariate[cols_to_scale])
+
+# drop columns we don't need (include a condo category to avoid dummy variable trap
+df_multivariate = df_multivariate.drop(['List', 'SoldDate', 'Hudson'], axis=1)
+
+features = df_multivariate.drop(['Sold'], axis=1)
+target = df_multivariate['Sold']
+
+regressor = LinearRegression()
+
+# fit our features and target to our linear regression
+regressor.fit(features, target)
+
+print('Accuracy:', regressor.score(features,target))</code></pre>
+                  </p>
+                  <p><em>Ideally, the above dataset should have been split into test and train (with accuracy scored against the test set), but the simple linear regression was written in JavaScript and used all data points.  I wanted to keep the final accuracy comparison the same.</em></p>
+               </div>
+            </div>
+         </div>
+      </section>
+      <!-- Footer-->
+      <footer class="py-5 bg-dark">
+         <div class="container">
+            <p class="m-0 text-center text-white">Copyright &copy; ellismis.com</p>
+         </div>
+      </footer>
+      <!-- Bootstrap core JS-->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+      <!-- Core theme JS-->
+      <script src="{{ url_for('static', filename='js/graphing.js')}}"></script>
+      <script type="text/javascript">
+         hljs.highlightAll();
+         graph();
+      </script>
+   </body>
+</html>
