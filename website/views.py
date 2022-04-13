@@ -7,13 +7,11 @@ global engine
 
 @views.route("/")
 def index():
-
     return render_template("index.html")
-    #return engine.file
+
 
 @views.route("/lineargraphdata")
 def lineargraphdata():
-    #z = engine.dfarray()
     return str(engine.dfarray())
 
 @views.route("/mvgraphdata")
